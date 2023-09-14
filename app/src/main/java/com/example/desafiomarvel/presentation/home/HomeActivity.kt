@@ -31,8 +31,9 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
         characterAdapter = CharacterAdapter(mutableListOf())
         recyclerView.adapter = characterAdapter
 
-        val carouselRecyclerView = binding.carouselRecyclerView
-        carouselRecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        val carouselRecyclerView = binding.rvCarouselCharacters
+        carouselRecyclerView.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         carouselAdapter = CharacterAdapter(mutableListOf())
         carouselRecyclerView.adapter = carouselAdapter
 
@@ -48,6 +49,11 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
                 }
             }
         })
+
+        binding.swipeRefreshLayout.setOnRefreshListener {
+            homePresenter.loadCarouselCharacters()
+            homePresenter.loadCharacters()
+        }
         homePresenter.loadCarouselCharacters()
         homePresenter.loadCharacters()
     }
@@ -57,16 +63,24 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
             characterAdapter.characters.addAll(characters)
         }
         characterAdapter.notifyDataSetChanged() // nao ta muito legal
+        binding.swipeRefreshLayout.isRefreshing = false
+
     }
 
     override fun showError(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        runOnUiThread {
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        }
+        binding.swipeRefreshLayout.isRefreshing = false
+
     }
 
     override fun showCarouselCharacters(characters: List<Character>?) {
         if (characters != null) {
             carouselAdapter.characters.addAll(characters)
         }
-        carouselAdapter.notifyDataSetChanged()// nao ta muito legal
+        carouselAdapter.notifyDataSetChanged() // nao ta muito legal
+        binding.swipeRefreshLayout.isRefreshing = false
+
     }
 }
