@@ -2,7 +2,7 @@ package com.example.desafiomarvel.di
 
 import com.example.desafiomarvel.BuildConfig
 import com.example.desafiomarvel.data.repository.MarvelRepository
-import com.example.desafiomarvel.domain.usecases.GetCharactersUseCase
+import com.example.desafiomarvel.domain.usecases.MarvelUseCase
 import com.example.desafiomarvel.network.MarvelInterceptor
 import com.example.desafiomarvel.network.MarvelService
 import com.example.desafiomarvel.presentation.home.HomePresenter
@@ -26,6 +26,8 @@ val appModule = module {
 
     single { get<Retrofit>().create(MarvelService::class.java) }
     single { MarvelRepository(get()) }
-    factory { GetCharactersUseCase(get()) }
+
+    factory { MarvelUseCase(get()) }
+
     factory { HomePresenter(get(), get()) }
 }
