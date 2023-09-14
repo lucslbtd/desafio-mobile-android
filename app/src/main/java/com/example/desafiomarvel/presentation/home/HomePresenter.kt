@@ -1,5 +1,6 @@
 package com.example.desafiomarvel.presentation.home
 
+import android.util.Log
 import com.example.desafiomarvel.domain.usecases.MarvelUseCase
 import kotlinx.coroutines.*
 
@@ -17,7 +18,7 @@ class HomePresenter(
     }
 
     override fun loadCharacters() {
-        CoroutineScope(Dispatchers.Main).launch {
+        CoroutineScope(Dispatchers.IO).launch {
             try {
                 val characters = marvelUseCase.getCharacters(offset, limit)
 
@@ -25,10 +26,16 @@ class HomePresenter(
                     view.showCharacters(characters.body()?.data?.results)
                     offset += limit
                 } else {
-                    view.showError("Carregando personagens. Aguarde")
+                    when (characters.code()) {
+                        204 -> view.showError("Erro: Personagens não encontrados.")
+
+                        in 400..404 -> view.showError("Erro: Solicitação com problemas.")
+
+                        500 -> view.showError("Erro interno do servidor. Tente novamente mais tarde.")
+                    }
                 }
             } catch (e: Exception) {
-                view.showError("Erro ao carregar personagens")
+                Log.e("CatchError", "Erro forte: ${e.message}")
             }
         }
     }
@@ -41,14 +48,17 @@ class HomePresenter(
                         marvelUseCase.getCharacterById(id)
                     }
                 }
+                if (characterRequests.isNotEmpty()) {
+                    val results = characterRequests.awaitAll()
+                    val famousCharacters =
+                        results.mapNotNull { it.body()?.data?.results?.firstOrNull() }
 
-                val results = characterRequests.awaitAll()
-                val famousCharacters =
-                    results.mapNotNull { it.body()?.data?.results?.firstOrNull() }
-
-                view.showCarouselCharacters(famousCharacters)
+                    view.showCarouselCharacters(famousCharacters)
+                } else {
+                    view.showError("Erro: Personagens não encontrados.")
+                }
             } catch (e: Exception) {
-                view.showError("Erro ao carregar carrossel.")
+                Log.e("CatchError", "Erro forte: ${e.message}")
             }
         }
     }
